@@ -39,7 +39,7 @@ cp admin/.env.example admin/.env
 cp mobile/.env.example mobile/.env
 npm run setup        # installs all three apps, creates the SQLite DB, seeds demo data
 npm run api          # http://localhost:4000
-npm run admin        # http://localhost:5173
+npm run admin        # http://localhost:5173 (proxies /api to the API)
 npm run mobile       # Expo dev server (press w for web, a for Android, or scan with Expo Go)
 ```
 
