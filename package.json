@@ -1,0 +1,12 @@
+{
+  "name": "turant-ondoor",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix backend install && npm --prefix admin install && npm --prefix mobile install && npm --prefix backend run db:push && npm --prefix backend run db:seed",
+    "api": "npm --prefix backend run dev",
+    "admin": "npm --prefix admin run dev",
+    "mobile": "npm --prefix mobile run start",
+    "test": "npm --prefix backend test",
+    "check": "npm --prefix backend run typecheck && npm --prefix admin run build && npm --prefix admin run lint && npm --prefix mobile run typecheck && npm --prefix mobile run lint"
+  }
+}
