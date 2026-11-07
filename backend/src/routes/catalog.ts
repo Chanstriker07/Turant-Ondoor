@@ -31,7 +31,7 @@ router.get("/services", async (req, res) => {
       isActive: true,
       category: { isActive: true },
       ...(categoryId ? { categoryId } : {}),
-      ...(q ? { OR: [{ name: { contains: q } }, { description: { contains: q } }] } : {}),
+      ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }] } : {}),
     },
     include: { category: true },
     orderBy: { name: "asc" },

@@ -6,6 +6,8 @@ import { badRequest, notFound } from "../lib/errors";
 import { BOOKING_STATUSES, BUSINESS_STATUSES, ROLES } from "../lib/constants";
 import { refreshBusinessRating, refreshProviderRating } from "../lib/ratings";
 import { requireAuth, requireRole } from "../middleware/auth";
+import { sealRecentBookings } from "../lib/realtime";
+import { presignDownload, presignUpload } from "../lib/storage";
 import { bookingInclude } from "./bookings";
 import { businessSchema } from "./listings";
 
@@ -18,6 +20,28 @@ const slugify = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+// ---------- Live bookings (Neon Realtime) ----------
+router.post("/bookings/live", async (_req, res) => {
+  res.json(await sealRecentBookings());
+});
+
+// ---------- Uploads (Neon Object Storage) ----------
+const uploadKey = z.string().regex(/^uploads\/[\w.-]+$/, "Invalid key");
+
+router.post("/uploads", async (req, res) => {
+  const { filename, contentType } = parse(
+    z.object({ filename: z.string().trim().min(1).max(120), contentType: z.string().regex(/^[\w.+-]+\/[\w.+-]+$/) }),
+    req.body,
+  );
+  const key = `uploads/${Date.now()}-${slugify(filename.replace(/\.[^.]+$/, "")) || "file"}${filename.match(/\.[a-z0-9]+$/i)?.[0] ?? ""}`;
+  res.status(201).json({ key, uploadUrl: await presignUpload(key, contentType), url: await presignDownload(key) });
+});
+
+router.get("/uploads/url", async (req, res) => {
+  const { key } = parse(z.object({ key: uploadKey }), req.query);
+  res.json({ key, url: await presignDownload(key) });
+});
 
 // ---------- Dashboard ----------
 router.get("/stats", async (_req, res) => {
@@ -161,10 +185,10 @@ router.get("/bookings", async (req, res) => {
         ...(q
           ? {
               OR: [
-                { id: { contains: q } },
-                { customer: { phone: { contains: q } } },
-                { customer: { name: { contains: q } } },
-                { service: { name: { contains: q } } },
+                { id: { contains: q, mode: "insensitive" } },
+                { customer: { phone: { contains: q, mode: "insensitive" } } },
+                { customer: { name: { contains: q, mode: "insensitive" } } },
+                { service: { name: { contains: q, mode: "insensitive" } } },
               ],
             }
           : {}),
@@ -288,7 +312,7 @@ router.get("/businesses", async (req, res) => {
     await prisma.business.findMany({
       where: {
         ...(status ? { status } : {}),
-        ...(q ? { OR: [{ name: { contains: q } }, { city: { contains: q } }, { phone: { contains: q } }] } : {}),
+        ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { city: { contains: q, mode: "insensitive" } }, { phone: { contains: q, mode: "insensitive" } }] } : {}),
       },
       include: { category: true, owner: { select: { id: true, name: true, phone: true } } },
       orderBy: { createdAt: "desc" },
@@ -338,7 +362,7 @@ router.get("/users", async (req, res) => {
     await prisma.user.findMany({
       where: {
         ...(role ? { role } : {}),
-        ...(q ? { OR: [{ phone: { contains: q } }, { name: { contains: q } }] } : {}),
+        ...(q ? { OR: [{ phone: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] } : {}),
       },
       select: {
         id: true,

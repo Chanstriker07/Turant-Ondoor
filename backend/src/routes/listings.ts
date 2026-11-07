@@ -48,15 +48,15 @@ router.get("/businesses", async (req, res) => {
     where: {
       status: "APPROVED",
       ...(categoryId ? { categoryId } : {}),
-      ...(city ? { city: { contains: city } } : {}),
+      ...(city ? { city: { contains: city, mode: "insensitive" } } : {}),
       ...(featured ? { isFeatured: true } : {}),
       ...(q
         ? {
             OR: [
-              { name: { contains: q } },
-              { description: { contains: q } },
-              { address: { contains: q } },
-              { category: { name: { contains: q } } },
+              { name: { contains: q, mode: "insensitive" } },
+              { description: { contains: q, mode: "insensitive" } },
+              { address: { contains: q, mode: "insensitive" } },
+              { category: { name: { contains: q, mode: "insensitive" } } },
             ],
           }
         : {}),
