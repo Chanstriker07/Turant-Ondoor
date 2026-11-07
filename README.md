@@ -71,12 +71,27 @@ npm run check    # typecheck/lint/build for all apps
 
 | Part | Host | Notes |
 | --- | --- | --- |
-| Database | [Neon](https://neon.tech) free Postgres | Use the direct (non-pooled) connection string as `DATABASE_URL`. |
+| Database | [Neon](https://neon.tech) free Postgres | Pooled URL as `DATABASE_URL`, direct URL as `DATABASE_URL_UNPOOLED` (used by `prisma db push`). |
 | API | [Render](https://render.com) free web service | `render.yaml` defines it. Sleeps after ~15 min idle; first request then takes ~1 min. |
 | Admin panel | Cloudflare Pages | `cd admin && VITE_API_URL=https://<api>/api npm run build`, deploy `admin/dist`. |
 | Mobile web | Cloudflare Pages | `cd mobile && EXPO_PUBLIC_API_URL=https://<api>/api npx expo export -p web`, deploy `mobile/dist`. |
 
 After the first API deploy, seed demo data once from your machine with `DATABASE_URL=<neon url> npm --prefix backend run db:seed` (this wipes existing data).
+
+### Neon services
+
+`neon.ts` declares the Neon services; `neon deploy` provisions them and writes their env vars to `.env.local` at the repo root, which the API loads ahead of `backend/.env`.
+
+| Service | Used for |
+| --- | --- |
+| Postgres | Prisma (`DATABASE_URL` pooled for the API, `DATABASE_URL_UNPOOLED` for schema pushes). |
+| Realtime | Admin dashboard "Recent bookings" updates live: `POST /api/admin/bookings/live` seals the query; set `VITE_NEON_REALTIME_URL` in `admin/.env`. Add each admin origin to `allowedOrigins` in `neon.ts`. |
+| Object Storage | `POST /api/admin/uploads` returns a presigned upload URL for the `assets` bucket; `GET /api/admin/uploads/url?key=` returns a download URL. |
+| Functions | `hello.ts` is deployed as the `hello` function. |
+| Auth | Provisioned but not used: Neon Auth has no phone-number sign-up, so login stays on the app's phone OTP. |
+| AI Gateway | Provisioned; needs AI Gateway credits in Neon Billing before any model call works. |
+
+With the API running, `cd backend && npx tsx scripts/neon-smoke.mts` checks every service end to end.
 
 ## Going to production
 

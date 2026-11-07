@@ -3,6 +3,8 @@ import { useApi } from "../lib/useApi";
 import type { BookingStatus, Stats } from "../lib/types";
 import { dateTime, rupees } from "../lib/format";
 import { Badge, PageHeader, State } from "../components/ui";
+import { LiveBookings } from "../components/LiveBookings";
+import { realtimeClient } from "../lib/realtime";
 
 const statuses: BookingStatus[] = ["PENDING", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
 
@@ -45,23 +47,27 @@ export default function Dashboard() {
             </div>
           ))}
         </section>
-        <section className="card">
-          <h2>Recent bookings</h2>
-          <State empty={data.recentBookings.length === 0} />
-          <ul className="list">
-            {data.recentBookings.map((b) => (
-              <li key={b.id}>
-                <div>
-                  <strong>{b.service.name}</strong>
-                  <small className="muted">
-                    {b.customer.name ?? b.customer.phone} · {dateTime(b.scheduledAt)}
-                  </small>
-                </div>
-                <Badge value={b.status} />
-              </li>
-            ))}
-          </ul>
-        </section>
+        {realtimeClient ? (
+          <LiveBookings />
+        ) : (
+          <section className="card">
+            <h2>Recent bookings</h2>
+            <State empty={data.recentBookings.length === 0} />
+            <ul className="list">
+              {data.recentBookings.map((b) => (
+                <li key={b.id}>
+                  <div>
+                    <strong>{b.service.name}</strong>
+                    <small className="muted">
+                      {b.customer.name ?? b.customer.phone} · {dateTime(b.scheduledAt)}
+                    </small>
+                  </div>
+                  <Badge value={b.status} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </>
   );

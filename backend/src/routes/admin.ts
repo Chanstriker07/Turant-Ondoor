@@ -6,6 +6,8 @@ import { badRequest, notFound } from "../lib/errors";
 import { BOOKING_STATUSES, BUSINESS_STATUSES, ROLES } from "../lib/constants";
 import { refreshBusinessRating, refreshProviderRating } from "../lib/ratings";
 import { requireAuth, requireRole } from "../middleware/auth";
+import { sealRecentBookings } from "../lib/realtime";
+import { presignDownload, presignUpload } from "../lib/storage";
 import { bookingInclude } from "./bookings";
 import { businessSchema } from "./listings";
 
@@ -18,6 +20,28 @@ const slugify = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+// ---------- Live bookings (Neon Realtime) ----------
+router.post("/bookings/live", async (_req, res) => {
+  res.json(await sealRecentBookings());
+});
+
+// ---------- Uploads (Neon Object Storage) ----------
+const uploadKey = z.string().regex(/^uploads\/[\w.-]+$/, "Invalid key");
+
+router.post("/uploads", async (req, res) => {
+  const { filename, contentType } = parse(
+    z.object({ filename: z.string().trim().min(1).max(120), contentType: z.string().regex(/^[\w.+-]+\/[\w.+-]+$/) }),
+    req.body,
+  );
+  const key = `uploads/${Date.now()}-${slugify(filename.replace(/\.[^.]+$/, "")) || "file"}${filename.match(/\.[a-z0-9]+$/i)?.[0] ?? ""}`;
+  res.status(201).json({ key, uploadUrl: await presignUpload(key, contentType), url: await presignDownload(key) });
+});
+
+router.get("/uploads/url", async (req, res) => {
+  const { key } = parse(z.object({ key: uploadKey }), req.query);
+  res.json({ key, url: await presignDownload(key) });
+});
 
 // ---------- Dashboard ----------
 router.get("/stats", async (_req, res) => {

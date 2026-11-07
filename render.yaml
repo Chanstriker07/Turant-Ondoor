@@ -12,6 +12,18 @@ services:
         value: "22"
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: NEON_REALTIME_SECRET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_ENDPOINT_URL_S3
+        sync: false
+      - key: AWS_REGION
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       # Demo login code; remove once a real SMS provider is wired into src/lib/otp.ts.
