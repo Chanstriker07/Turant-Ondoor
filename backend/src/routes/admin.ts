@@ -161,10 +161,10 @@ router.get("/bookings", async (req, res) => {
         ...(q
           ? {
               OR: [
-                { id: { contains: q } },
-                { customer: { phone: { contains: q } } },
-                { customer: { name: { contains: q } } },
-                { service: { name: { contains: q } } },
+                { id: { contains: q, mode: "insensitive" } },
+                { customer: { phone: { contains: q, mode: "insensitive" } } },
+                { customer: { name: { contains: q, mode: "insensitive" } } },
+                { service: { name: { contains: q, mode: "insensitive" } } },
               ],
             }
           : {}),
@@ -288,7 +288,7 @@ router.get("/businesses", async (req, res) => {
     await prisma.business.findMany({
       where: {
         ...(status ? { status } : {}),
-        ...(q ? { OR: [{ name: { contains: q } }, { city: { contains: q } }, { phone: { contains: q } }] } : {}),
+        ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { city: { contains: q, mode: "insensitive" } }, { phone: { contains: q, mode: "insensitive" } }] } : {}),
       },
       include: { category: true, owner: { select: { id: true, name: true, phone: true } } },
       orderBy: { createdAt: "desc" },
@@ -338,7 +338,7 @@ router.get("/users", async (req, res) => {
     await prisma.user.findMany({
       where: {
         ...(role ? { role } : {}),
-        ...(q ? { OR: [{ phone: { contains: q } }, { name: { contains: q } }] } : {}),
+        ...(q ? { OR: [{ phone: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] } : {}),
       },
       select: {
         id: true,

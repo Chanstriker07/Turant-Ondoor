@@ -2,9 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// SQLite for local development. For production switch provider to "postgresql".
+// Postgres everywhere: docker compose locally, Neon (or any Postgres) in production.
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

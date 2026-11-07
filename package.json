@@ -2,6 +2,7 @@
   "name": "turant-ondoor",
   "private": true,
   "scripts": {
+    "db:up": "docker compose up -d db",
     "setup": "npm --prefix backend install && npm --prefix admin install && npm --prefix mobile install && npm --prefix backend run db:push && npm --prefix backend run db:seed",
     "api": "npm --prefix backend run dev",
     "admin": "npm --prefix admin run dev",
